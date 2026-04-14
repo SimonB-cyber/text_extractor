@@ -8,6 +8,7 @@ import pyperclip
 from concurrent.futures import ProcessPoolExecutor
 import sys
 import multiprocessing
+from ImageToText import get_config_path
 
 # --- UI Configuration ---
 ctk.set_appearance_mode("Dark")
@@ -32,7 +33,7 @@ class OCRExtractorGUI(ctk.CTk):
         self.log_window = None
 
         self.ai_config = {}
-        self.ai_config_file = "ai_config.json"
+        self.ai_config_file = get_config_path("ai_config.json")
         if os.path.exists(self.ai_config_file):
             import json
             try:
@@ -382,7 +383,9 @@ class OCRExtractorGUI(ctk.CTk):
         self.processing_results = results
         
         if results:
-            with open("gesammelter_text.txt", "a", encoding="utf-8") as f:
+            desktop = os.path.join(os.path.expanduser("~"), "Desktop")
+            self.output_file = os.path.join(desktop, "gesammelter_text.txt")
+            with open(self.output_file, "a", encoding="utf-8") as f:
                 for p, s, t in results:
                     f.write(t + "\n\n")
         
@@ -401,7 +404,7 @@ class OCRExtractorGUI(ctk.CTk):
         else:
             self.status_label.configure(text="✅ Fertig! Alles wurde gesichert.", text_color="#34d399")
             self.start_button.configure(text="🚀 NEUE VERARBEITUNG")
-            messagebox.showinfo("Abschluss", "Verarbeitung erfolgreich beendet!\nDer Text wurde in 'gesammelter_text.txt' gespeichert.")
+            messagebox.showinfo("Abschluss", f"Verarbeitung erfolgreich beendet!\nDer Text wurde auf deinem Desktop gespeichert:\n{self.output_file}")
 
         self.start_button.configure(state="normal", fg_color="#38bdf8")
         self.abort_button.configure(state="disabled", text="🛑 Stopp", fg_color="#475569")

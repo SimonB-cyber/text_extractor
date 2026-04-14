@@ -20,6 +20,12 @@ if os.name == 'nt':
         return _orig_popen(*args, **kwargs)
     subprocess.Popen = _silent_popen
 
+def get_config_path(filename):
+    """Gibt einen schreibbaren Pfad im Benutzer-AppData-Verzeichnis zurück."""
+    app_data = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), "TextExtraktPro")
+    os.makedirs(app_data, exist_ok=True)
+    return os.path.join(app_data, filename)
+
 def install_python_packages():
     """1. Prüft und installiert alle fehlenden Python/Pip-Module"""
     packages = {'pdfplumber': 'pdfplumber', 'PIL': 'pillow', 'pytesseract': 'pytesseract', 'pyperclip': 'pyperclip', 'customtkinter': 'customtkinter', 'g4f': 'g4f', 'symspellpy': 'symspellpy'}
@@ -78,9 +84,9 @@ def auto_find_tesseract():
 
 def setup_tesseract(lang='deu'):
     """Mehrstufige Einrichtung: Suche -> Install -> Info/Prompt"""
+    config_file = get_config_path("tesseract_path.txt")
+    failed_flag = get_config_path("setup_failed.txt")
     skript_ordner = os.path.dirname(os.path.abspath(__file__))
-    config_file = os.path.join(skript_ordner, "tesseract_path.txt")
-    failed_flag = os.path.join(skript_ordner, "setup_failed.txt")
     
     # 1. Config Check
     if os.path.exists(config_file):
@@ -245,8 +251,7 @@ def symspell_fallback(text):
     import urllib.request
     from symspellpy import SymSpell, Verbosity
     
-    skript_ordner = os.path.dirname(os.path.abspath(__file__))
-    dict_path = os.path.join(skript_ordner, "de-100k.txt")
+    dict_path = get_config_path("de-100k.txt")
     
     if not os.path.exists(dict_path):
         print("[System] Lade offline SymSpell Wörterbuch herunter...")
