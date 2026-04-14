@@ -1,0 +1,11 @@
+# Text Extraktor Pro - .gitignore
+build/
+dist/
+*.spec
+__pycache__/
+*.pyc
+installer_output/*.exe
+innosetup_installer.exe
+de-100k.txt
+ai_config.json
+gesammelter_text.txt
