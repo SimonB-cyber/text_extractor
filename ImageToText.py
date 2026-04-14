@@ -131,27 +131,33 @@ def setup_tesseract(lang='deu'):
     exe_dir = os.path.dirname(exe_path)
     system_tessdata = os.path.join(exe_dir, "tessdata")
     
-    # Lokaler Ordner als Fallback
-    local_tessdata = os.path.join(skript_ordner, "tessdata")
-    os.makedirs(local_tessdata, exist_ok=True)
+    # Nutzer-Spezifischer tessdata-Ordner in APPDATA (Hier haben wir immer Schreibrechte)
+    user_tessdata = get_config_path("tessdata")
+    os.makedirs(user_tessdata, exist_ok=True)
 
-    # Strategie: Wenn im System-Ordner die Sprache fehlt, laden wir sie lokal herunter
-    lang_found_system = os.path.exists(os.path.join(system_tessdata, f"{lang}.traineddata")) if os.path.exists(system_tessdata) else False
-    
-    if lang_found_system:
-        # Tesseract findet seine eigenen Daten am besten selbst
+    def ensure_lang(l, target_dir):
+        lang_file = os.path.join(target_dir, f"{l}.traineddata")
+        if not os.path.exists(lang_file):
+            # Falls im Zielordner nicht da, versuchen wir es herunterzuladen
+            url = f"https://github.com/tesseract-ocr/tessdata/raw/main/{l}.traineddata"
+            try: urllib.request.urlretrieve(url, lang_file)
+            except: return False
+        return True
+
+    # Strategie: Wenn im System-Ordner die Sprache vorhanden ist, nutzen wir den System-Ordner.
+    # Ansonsten nutzen wir VOLLSTÄNDIG den Nutzer-Ordner (und laden Sprachen dort nach).
+    if os.path.exists(os.path.join(system_tessdata, f"{lang}.traineddata")):
         if "TESSDATA_PREFIX" in os.environ: del os.environ["TESSDATA_PREFIX"]
         return exe_path, system_tessdata
     else:
-        # Wir müssen unsere lokalen Daten nutzen
-        lang_file = os.path.join(local_tessdata, f"{lang}.traineddata")
-        if not os.path.exists(lang_file):
-            url = f"https://github.com/tesseract-ocr/tessdata/raw/main/{lang}.traineddata"
-            try: urllib.request.urlretrieve(url, lang_file)
-            except: pass
-        
-        os.environ["TESSDATA_PREFIX"] = local_tessdata
-        return exe_path, local_tessdata
+        # Wir müssen den Nutzer-Ordner verwenden. Wir brauchen osd und die Zielsprache.
+        ensure_lang("osd", user_tessdata)
+        if ensure_lang(lang, user_tessdata):
+            os.environ["TESSDATA_PREFIX"] = user_tessdata
+            return exe_path, user_tessdata
+        else:
+            # Fallback falls Download scheitert: Hoffen auf System-Ordner trotz Fehlens
+            return exe_path, system_tessdata
 
 
 
