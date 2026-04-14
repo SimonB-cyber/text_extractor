@@ -86,9 +86,14 @@ def setup_tesseract(lang='deu'):
     if os.path.exists(config_file):
         with open(config_file, 'r', encoding='utf-8') as f:
             p = f.read().strip().strip('"')
-            if os.path.exists(p): 
+            if os.path.exists(p):
                 pytesseract.pytesseract.tesseract_cmd = p
-                return p, os.path.join(skript_ordner, "tessdata")
+                # Leite tessdata-Ordner vom echten Tesseract-Installationspfad ab
+                real_tessdata = os.path.join(os.path.dirname(p), "tessdata")
+                if os.path.exists(real_tessdata):
+                    return p, real_tessdata
+                else:
+                    return p, os.path.join(skript_ordner, "tessdata")
 
     # 2. Auto-Find Standard-Orte
     exe_path = auto_find_tesseract()
