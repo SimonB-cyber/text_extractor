@@ -13,6 +13,10 @@ import multiprocessing
 ctk.set_appearance_mode("Dark")
 ctk.set_default_color_theme("blue")
 
+APP_VERSION = "1.0"
+GITHUB_VERSION_URL = "https://raw.githubusercontent.com/SimonB-cyber/text_extractor/main/version.txt"
+GITHUB_RELEASE_URL = "https://github.com/SimonB-cyber/text_extractor/releases/latest/download/TextExtraktPro_Setup_v{version}.exe"
+
 class OCRExtractorGUI(ctk.CTk):
     def __init__(self):
         super().__init__()
@@ -61,11 +65,54 @@ class OCRExtractorGUI(ctk.CTk):
             else:
                 self.log(f"Tesseract bereit: {t_path}")
             
+            # Check for Updates
+            self.check_for_updates()
+            
             # Re-Enable start button once imports are fully loaded!
             self.after(0, lambda: self.status_label.configure(text="✅ Alle Engines geladen! Drei Schritte zum Text: Dateien laden -> Modus wählen -> Starten", text_color="#34d399"))
             self.after(0, lambda: self.start_button.configure(state="normal"))
         except Exception as e:
             self.log(f"Fehler beim Laden im Hintergrund: {e}")
+
+    def check_for_updates(self):
+        try:
+            import urllib.request
+            self.log("Suche nach Updates...")
+            with urllib.request.urlopen(GITHUB_VERSION_URL, timeout=5) as r:
+                latest = r.read().decode('utf-8').strip()
+            
+            def version_tuple(v):
+                return tuple(int(x) for x in v.split('.'))
+            
+            if version_tuple(latest) > version_tuple(APP_VERSION):
+                self.log(f"Update verfügbar: v{latest} (aktuell: v{APP_VERSION})")
+                self.after(0, lambda: self._prompt_update(latest))
+            else:
+                self.log(f"Programm ist aktuell (v{APP_VERSION}).")
+        except Exception as e:
+            self.log(f"Update-Check fehlgeschlagen (kein Internet?): {e}")
+
+    def _prompt_update(self, new_version):
+        if messagebox.askyesno(
+            "🔔 Update verfügbar!",
+            f"Version {new_version} ist verfügbar!\nAktuell installiert: {APP_VERSION}\n\nJetzt herunterladen und installieren?"
+        ):
+            self.log(f"Download von v{new_version} gestartet...")
+            threading.Thread(target=self._download_and_install_update, args=(new_version,), daemon=True).start()
+
+    def _download_and_install_update(self, new_version):
+        import urllib.request, tempfile, subprocess, os
+        url = GITHUB_RELEASE_URL.format(version=new_version)
+        try:
+            tmp = os.path.join(tempfile.gettempdir(), f"TextExtraktPro_Update_v{new_version}.exe")
+            self.log(f"Lade herunter: {url}")
+            urllib.request.urlretrieve(url, tmp)
+            self.log(f"Download fertig! Starte Installer...")
+            subprocess.Popen([tmp], shell=True)
+            self.after(0, self.destroy)
+        except Exception as e:
+            self.log(f"Update-Download fehlgeschlagen: {e}")
+            self.after(0, lambda: messagebox.showerror("Update fehlgeschlagen", f"Download gescheitert:\n{e}\n\nBitte manuell auf GitHub herunterladen."))
 
     def log(self, message):
         import datetime
