@@ -14,7 +14,7 @@ from ImageToText import get_config_path
 ctk.set_appearance_mode("Dark")
 ctk.set_default_color_theme("blue")
 
-APP_VERSION = "1.0"
+APP_VERSION = "1.1"
 GITHUB_VERSION_URL = "https://raw.githubusercontent.com/SimonB-cyber/text_extractor/main/version.txt"
 GITHUB_RELEASE_URL = "https://github.com/SimonB-cyber/text_extractor/releases/latest/download/TextExtraktPro_Setup_v{version}.exe"
 
