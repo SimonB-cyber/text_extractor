@@ -2,7 +2,7 @@
 ; Text-Extraktor Pro - Inno Setup Installer Script
 ; ============================================================
 #define AppName "Text-Extraktor Pro"
-#define AppVersion "1.0"
+#define AppVersion "1.2"
 #define AppPublisher "Simon B."
 #define AppExeName "TextExtraktPro.exe"
 #define TessSourceDir "C:\Program Files\Tesseract-OCR"
@@ -20,7 +20,7 @@ Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
 OutputDir=C:\Users\Simon B\Downloads\installer_output
-OutputBaseFilename=TextExtraktPro_Setup_v1
+OutputBaseFilename=TextExtraktPro_Setup_v1.2
 ; Show nice welcome page
 DisableWelcomePage=no
 ; Run as admin so we can install to Program Files
@@ -44,7 +44,7 @@ Source: "C:\Users\Simon B\Downloads\dist\TextExtraktPro\*"; DestDir: "{app}"; Fl
 Source: "C:\Program Files\Tesseract-OCR\*"; DestDir: "{autopf}\Tesseract-OCR"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; ------ tesseract_path.txt damit das Programm es direkt findet ------
-Source: "C:\Users\Simon B\Downloads\tesseract_path.txt"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
+Source: "C:\Users\Simon B\Downloads\tesseract_path.txt"; DestDir: "{userappdata}\TextExtraktPro"; Flags: ignoreversion skipifsourcedoesntexist
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"
@@ -59,16 +59,22 @@ Root: HKLM; Subkey: "SOFTWARE\Tesseract-OCR"; ValueType: string; ValueName: "Pat
 Filename: "{app}\{#AppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(AppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [Code]
-// Schreibe die tesseract_path.txt mit dem echten Pfad nach der Installation
+// Schreibe die tesseract_path.txt mit dem echten Pfad nach der Installation in APPDATA
 procedure WriteConfigFile();
 var
   TessPath: String;
   ConfigLines: TArrayOfString;
+  AppDataDir: String;
 begin
   TessPath := ExpandConstant('{autopf}\Tesseract-OCR\tesseract.exe');
+  AppDataDir := ExpandConstant('{userappdata}\TextExtraktPro');
+  
+  // Ordner erstellen falls er nicht existiert
+  ForceDirectories(AppDataDir);
+  
   SetArrayLength(ConfigLines, 1);
   ConfigLines[0] := TessPath;
-  SaveStringsToFile(ExpandConstant('{app}\tesseract_path.txt'), ConfigLines, False);
+  SaveStringsToFile(AppDataDir + '\tesseract_path.txt', ConfigLines, False);
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
